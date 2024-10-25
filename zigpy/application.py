@@ -641,7 +641,7 @@ class ControllerApplication(zigpy.util.ListenableMixin, abc.ABC):
         return False
 
     @abc.abstractmethod
-    async def connect(self):
+    async def connect(self) -> None:
         """Connect to the radio hardware and verify that it is compatible with the library.
         This method should be stateless if the connection attempt fails.
         """

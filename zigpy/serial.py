@@ -24,6 +24,52 @@ except ImportError:
     import serial_asyncio as pyserial_asyncio
 
 
+class SerialProtocol(asyncio.Protocol):
+    """Base class for packet-parsing serial protocol implementations."""
+
+    def __init__(self) -> None:
+        self._buffer = bytearray()
+        self._transport: pyserial_asyncio.SerialTransport | None = None
+
+        self._connected_event = asyncio.Event()
+        self._disconnected_event = asyncio.Event()
+        self._disconnected_event.set()
+
+    async def wait_until_connected(self) -> None:
+        """Wait for the protocol's transport to be connected."""
+        await self._connected_event.wait()
+
+    def connection_made(self, transport: pyserial_asyncio.SerialTransport) -> None:
+        LOGGER.debug("Connection made: %s", transport)
+
+        self._transport = transport
+        self._disconnected_event.clear()
+        self._connected_event.set()
+
+    def connection_lost(self, exc: BaseException | None) -> None:
+        LOGGER.debug("Connection lost: %r", exc)
+        self._connected_event.clear()
+        self._disconnected_event.set()
+        self._transport = None
+
+    def data_received(self, data: bytes) -> None:
+        self._buffer += data
+
+    def close(self) -> None:
+        self._buffer.clear()
+
+        if self._transport is not None:
+            self._transport.close()
+
+    async def wait_until_closed(self) -> None:
+        LOGGER.debug("Waiting for serial port to close")
+        await self._disconnected_event.wait()
+
+    async def disconnect(self) -> None:
+        self.close()
+        await self.wait_until_closed()
+
+
 async def create_serial_connection(
     loop: asyncio.BaseEventLoop,
     protocol_factory: typing.Callable[[], asyncio.Protocol],
