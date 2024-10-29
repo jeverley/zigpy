@@ -367,6 +367,22 @@ class FriendlyNameMetadata:
     manufacturer: str = attrs.field()
 
 
+class DeviceAlertLevel(Enum):
+    """Device alert level."""
+
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+
+
+@attrs.define(frozen=True, kw_only=True, repr=True)
+class DeviceAlertMetadata:
+    """Metadata for device-specific alerts."""
+
+    level: DeviceAlertLevel = attrs.field(converter=DeviceAlertLevel)
+    message: str = attrs.field()
+
+
 @attrs.define(frozen=True, kw_only=True, repr=True)
 class QuirksV2RegistryEntry:
     """Quirks V2 registry entry."""
@@ -377,6 +393,7 @@ class QuirksV2RegistryEntry:
         factory=tuple
     )
     friendly_name: FriendlyNameMetadata | None = attrs.field(default=None)
+    device_alerts: tuple[DeviceAlertMetadata] = attrs.field(factory=tuple)
     filters: tuple[FilterType] = attrs.field(factory=tuple)
     custom_device_class: type[CustomDeviceV2] | None = attrs.field(default=None)
     device_node_descriptor: NodeDescriptor | None = attrs.field(default=None)
@@ -430,6 +447,7 @@ class QuirkBuilder:
         self.registry: DeviceRegistry = registry
         self.manufacturer_model_metadata: list[ManufacturerModelMetadata] = []
         self.friendly_name_metadata: FriendlyNameMetadata | None = None
+        self.device_alerts: list[DeviceAlertMetadata] = []
         self.filters: list[FilterType] = []
         self.custom_device_class: type[CustomDeviceV2] | None = None
         self.device_node_descriptor: NodeDescriptor | None = None
@@ -917,6 +935,11 @@ class QuirkBuilder:
         )
         return self
 
+    def device_alert(self, *, level: DeviceAlertLevel, message: str) -> QuirkBuilder:
+        """Adds a device alert."""
+        self.device_alerts.append(DeviceAlertMetadata(level=level, message=message))
+        return self
+
     def add_to_registry(self) -> QuirksV2RegistryEntry:
         """Build the quirks v2 registry entry."""
         if not self.manufacturer_model_metadata:
@@ -926,6 +949,7 @@ class QuirkBuilder:
         quirk: QuirksV2RegistryEntry = QuirksV2RegistryEntry(
             manufacturer_model_metadata=tuple(self.manufacturer_model_metadata),
             friendly_name=self.friendly_name_metadata,
+            device_alerts=tuple(self.device_alerts),
             quirk_file=self.quirk_file,
             quirk_file_line=self.quirk_file_line,
             filters=tuple(self.filters),
