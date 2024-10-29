@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections
 from copy import deepcopy
+import dataclasses
 from enum import Enum
 import inspect
 import logging
@@ -49,6 +50,15 @@ UNBUILT_QUIRK_BUILDERS: list[QuirkBuilder] = []
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 # pylint: disable=too-few-public-methods
+
+
+@dataclasses.dataclass(frozen=True)
+class ReportingConfig:
+    """Reporting config for an entity attribute."""
+
+    min_interval: int
+    max_interval: int
+    reportable_change: int
 
 
 class CustomDeviceV2(BaseCustomDevice):
@@ -272,6 +282,7 @@ class ZCLEnumMetadata(EntityMetadata):
 
     enum: type[Enum] = attrs.field()
     attribute_name: str = attrs.field()
+    reporting_config: ReportingConfig | None = attrs.field(default=None)
 
 
 @attrs.define(frozen=True, kw_only=True, repr=True)
@@ -279,6 +290,7 @@ class ZCLSensorMetadata(EntityMetadata):
     """Metadata for exposed ZCL attribute based sensor entity."""
 
     attribute_name: str | None = attrs.field(default=None)
+    reporting_config: ReportingConfig | None = attrs.field(default=None)
     divisor: int | None = attrs.field(default=None)
     multiplier: int | None = attrs.field(default=None)
     unit: str | None = attrs.field(default=None)
@@ -291,6 +303,7 @@ class SwitchMetadata(EntityMetadata):
     """Metadata for exposed switch entity."""
 
     attribute_name: str = attrs.field()
+    reporting_config: ReportingConfig | None = attrs.field(default=None)
     force_inverted: bool = attrs.field(default=False)
     invert_attribute_name: str | None = attrs.field(default=None)
     off_value: int = attrs.field(default=0)
@@ -302,6 +315,7 @@ class NumberMetadata(EntityMetadata):
     """Metadata for exposed number entity."""
 
     attribute_name: str = attrs.field()
+    reporting_config: ReportingConfig | None = attrs.field(default=None)
     min: float | None = attrs.field(default=None)
     max: float | None = attrs.field(default=None)
     step: float | None = attrs.field(default=None)
@@ -316,6 +330,7 @@ class BinarySensorMetadata(EntityMetadata):
     """Metadata for exposed binary sensor entity."""
 
     attribute_name: str = attrs.field()
+    reporting_config: ReportingConfig | None = attrs.field(default=None)
     device_class: BinarySensorDeviceClass | None = attrs.field(default=None)
 
 
@@ -621,6 +636,7 @@ class QuirkBuilder:
         entity_type: EntityType = EntityType.CONFIG,
         initially_disabled: bool = False,
         attribute_initialized_from_cache: bool = True,
+        reporting_config: ReportingConfig | None = None,
         translation_key: str | None = None,
         fallback_name: str | None = None,
     ) -> QuirkBuilder:
@@ -637,6 +653,7 @@ class QuirkBuilder:
                 entity_type=entity_type,
                 initially_disabled=initially_disabled,
                 attribute_initialized_from_cache=attribute_initialized_from_cache,
+                reporting_config=reporting_config,
                 translation_key=translation_key,
                 fallback_name=fallback_name,
                 enum=enum_class,
@@ -659,6 +676,7 @@ class QuirkBuilder:
         unit: str | None = None,
         initially_disabled: bool = False,
         attribute_initialized_from_cache: bool = True,
+        reporting_config: ReportingConfig | None = None,
         translation_key: str | None = None,
         fallback_name: str | None = None,
     ) -> QuirkBuilder:
@@ -675,6 +693,7 @@ class QuirkBuilder:
                 entity_type=entity_type,
                 initially_disabled=initially_disabled,
                 attribute_initialized_from_cache=attribute_initialized_from_cache,
+                reporting_config=reporting_config,
                 translation_key=translation_key,
                 fallback_name=fallback_name,
                 attribute_name=attribute_name,
@@ -701,6 +720,7 @@ class QuirkBuilder:
         entity_type: EntityType = EntityType.CONFIG,
         initially_disabled: bool = False,
         attribute_initialized_from_cache: bool = True,
+        reporting_config: ReportingConfig | None = None,
         translation_key: str | None = None,
         fallback_name: str | None = None,
     ) -> QuirkBuilder:
@@ -717,6 +737,7 @@ class QuirkBuilder:
                 entity_type=entity_type,
                 initially_disabled=initially_disabled,
                 attribute_initialized_from_cache=attribute_initialized_from_cache,
+                reporting_config=reporting_config,
                 translation_key=translation_key,
                 fallback_name=fallback_name,
                 attribute_name=attribute_name,
@@ -744,6 +765,7 @@ class QuirkBuilder:
         device_class: NumberDeviceClass | None = None,
         initially_disabled: bool = False,
         attribute_initialized_from_cache: bool = True,
+        reporting_config: ReportingConfig | None = None,
         translation_key: str | None = None,
         fallback_name: str | None = None,
     ) -> QuirkBuilder:
@@ -760,6 +782,7 @@ class QuirkBuilder:
                 entity_type=entity_type,
                 initially_disabled=initially_disabled,
                 attribute_initialized_from_cache=attribute_initialized_from_cache,
+                reporting_config=reporting_config,
                 translation_key=translation_key,
                 fallback_name=fallback_name,
                 attribute_name=attribute_name,
@@ -784,6 +807,7 @@ class QuirkBuilder:
         device_class: BinarySensorDeviceClass | None = None,
         initially_disabled: bool = False,
         attribute_initialized_from_cache: bool = True,
+        reporting_config: ReportingConfig | None = None,
         translation_key: str | None = None,
         fallback_name: str | None = None,
     ) -> QuirkBuilder:
@@ -800,6 +824,7 @@ class QuirkBuilder:
                 entity_type=entity_type,
                 initially_disabled=initially_disabled,
                 attribute_initialized_from_cache=attribute_initialized_from_cache,
+                reporting_config=reporting_config,
                 translation_key=translation_key,
                 fallback_name=fallback_name,
                 attribute_name=attribute_name,
