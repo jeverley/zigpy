@@ -557,7 +557,7 @@ async def test_form_network_find_best_channel(app):
 
 
 async def test_startup_formed():
-    app = make_app({conf.CONF_STARTUP_ENERGY_SCAN: False})
+    app = make_app({})
     app.start_network = AsyncMock(wraps=app.start_network)
     app.form_network = AsyncMock()
     app.permit = AsyncMock()
@@ -570,7 +570,7 @@ async def test_startup_formed():
 
 
 async def test_startup_not_formed():
-    app = make_app({conf.CONF_STARTUP_ENERGY_SCAN: False})
+    app = make_app({})
     app.start_network = AsyncMock(wraps=app.start_network)
     app.form_network = AsyncMock()
     app.load_network_info = AsyncMock(
@@ -597,7 +597,7 @@ async def test_startup_not_formed():
 
 
 async def test_startup_not_formed_with_backup():
-    app = make_app({conf.CONF_STARTUP_ENERGY_SCAN: False})
+    app = make_app({})
     app.start_network = AsyncMock(wraps=app.start_network)
     app.load_network_info = AsyncMock(side_effect=[NetworkNotFormed(), None])
     app.permit = AsyncMock()
@@ -1295,24 +1295,6 @@ async def test_energy_scan_not_implemented(app):
         channels=t.Channels.ALL_CHANNELS, duration_exp=2, count=1
     )
     assert results == {c: 0 for c in range(11, 26 + 1)}
-
-
-@pytest.mark.parametrize(
-    ("scan", "message_present"),
-    [
-        ({c: 0 for c in t.Channels.ALL_CHANNELS}, False),
-        ({c: 255 for c in t.Channels.ALL_CHANNELS}, True),
-    ],
-)
-async def test_startup_energy_scan(app, caplog, scan, message_present):
-    with mock.patch.object(app, "energy_scan", return_value=scan):
-        with caplog.at_level(logging.WARNING):
-            await app.startup()
-
-    if message_present:
-        assert "Zigbee channel 15 utilization is 100.00%" in caplog.text
-    else:
-        assert "Zigbee channel" not in caplog.text
 
 
 async def test_startup_broadcast_failure_due_to_interference(app, caplog):
