@@ -83,6 +83,59 @@ async def test_dynamic_bounded_semaphore_multiple_locking():
     assert not sem.locked()
 
 
+async def test_dynamic_bounded_semaphore_hanging_bug():
+    """Test semaphore hanging bug."""
+    sem = datastructures.PriorityDynamicBoundedSemaphore(1)
+
+    async def c1():
+        async with sem:
+            await asyncio.sleep(0)
+        t2.cancel()
+
+    async def c2():
+        async with sem:
+            pytest.fail("Should never get here")
+
+    t1 = asyncio.create_task(c1())
+    t2 = asyncio.create_task(c2())
+
+    r1, r2 = await asyncio.gather(t1, t2, return_exceptions=True)
+    assert r1 is None
+    assert isinstance(r2, asyncio.CancelledError)
+
+    assert not sem.locked()
+
+    async with sem:
+        assert True
+
+
+def test_dynamic_bounded_semaphore_multiple_event_loops():
+    """Test semaphore detecting multiple loops."""
+
+    async def test_semaphore(sem):
+        async with sem:
+            await asyncio.sleep(0.1)
+
+    async def make_semaphore():
+        sem = datastructures.PriorityDynamicBoundedSemaphore(1)
+
+        # The loop reference is lazily created so we need to actually lock the semaphore
+        await asyncio.gather(test_semaphore(sem), test_semaphore(sem))
+
+        return sem
+
+    loop1 = asyncio.new_event_loop()
+    sem = loop1.run_until_complete(make_semaphore())
+
+    async def inner():
+        await asyncio.gather(test_semaphore(sem), test_semaphore(sem))
+
+    loop2 = asyncio.new_event_loop()
+
+    with pytest.raises(RuntimeError):
+        loop2.run_until_complete(inner())
+
+
 async def test_dynamic_bounded_semaphore_runtime_limit_increase(event_loop):
     """Test changing the max_value at runtime."""
 
@@ -345,3 +398,57 @@ async def test_debouncer_low_resolution_clock():
         # The two objects cannot be compared
         with pytest.raises(TypeError):
             obj1 < obj2  # noqa: B015
+
+
+async def test_debouncer_cleaning_bug():
+    """Test debouncer bug when using heapq improperly."""
+    debouncer = datastructures.Debouncer()
+
+    obj1 = object()
+    obj2 = object()
+    obj3 = object()
+
+    # Filter obj1 with an expiration of 0.3 seconds
+    debouncer.filter(obj1, expire_in=0.3)
+
+    # Slight delay to ensure different expiration times
+    await asyncio.sleep(0.05)
+
+    # Filter obj2 with an expiration of 0.1 seconds
+    debouncer.filter(obj2, expire_in=0.1)
+
+    # Another slight delay
+    await asyncio.sleep(0.05)
+
+    # Filter obj3 with an expiration of 0.2 seconds
+    debouncer.filter(obj3, expire_in=0.2)
+
+    assert debouncer.is_filtered(obj1)
+    assert debouncer.is_filtered(obj2)
+    assert debouncer.is_filtered(obj3)
+
+    # Wait until after obj2 should have expired
+    await asyncio.sleep(0.11)  # Total elapsed time ~0.21 seconds from start
+
+    # Clean up expired items
+    debouncer.clean()
+
+    # obj2 should have expired, but due to the bug, it might still be filtered
+    assert not debouncer.is_filtered(obj2)
+
+    # obj1 and obj3 should still be filtered
+    assert debouncer.is_filtered(obj1)
+    assert debouncer.is_filtered(obj3)
+
+    # Wait until after obj1 and obj3 should have expired
+    await asyncio.sleep(0.1)  # Total elapsed time ~0.31 seconds from start
+
+    # Clean up expired items
+    debouncer.clean()
+
+    # Now all objects should have expired
+    assert not debouncer.is_filtered(obj1)
+    assert not debouncer.is_filtered(obj3)
+
+    # The queue should be empty
+    assert len(debouncer._queue) == 0
