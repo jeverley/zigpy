@@ -9,6 +9,7 @@ from enum import Enum
 import inspect
 import logging
 import pathlib
+from types import FrameType
 import typing
 from typing import TYPE_CHECKING, Any
 
@@ -471,10 +472,10 @@ class QuirkBuilder:
             tuple[str, str], dict[str, str]
         ] = {}
 
-        stack: list[inspect.FrameInfo] = inspect.stack()
-        caller: inspect.FrameInfo = stack[1]
-        self.quirk_file = pathlib.Path(caller.filename)
-        self.quirk_file_line = caller.lineno
+        current_frame: FrameType = inspect.currentframe()
+        caller: FrameType = current_frame.f_back
+        self.quirk_file = pathlib.Path(caller.f_code.co_filename)
+        self.quirk_file_line = caller.f_lineno
 
         if manufacturer and model:
             self.applies_to(manufacturer, model)
