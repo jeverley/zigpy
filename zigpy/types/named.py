@@ -644,3 +644,22 @@ class ZigbeePacket(BaseDataclassMixin):
                 self.priority,
             )
         )
+
+
+@dataclasses.dataclass(frozen=True)
+class NetworkBeacon(BaseDataclassMixin):
+    pan_id: PanId
+    extended_pan_id: EUI64
+    channel: basic.uint8_t
+    permit_joining: bool
+    stack_profile: basic.uint8_t
+    nwk_update_id: basic.uint8_t
+    lqi: basic.uint8_t
+
+    # Migrate to kwarg-only once we drop 3.9
+    src: NWK | None = None
+    rssi: basic.int8s | None = None
+    depth: basic.uint8_t | None = None
+    router_capacity: bool | None = None
+    device_capacity: bool | None = None
+    protocol_version: basic.uint8_t | None = None
