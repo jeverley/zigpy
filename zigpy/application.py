@@ -1248,6 +1248,29 @@ class ControllerApplication(zigpy.util.ListenableMixin, abc.ABC):
         if False:
             yield  # pragma: no cover
 
+    async def packet_capture(
+        self, channel: int
+    ) -> AsyncGenerator[t.CapturedPacket, None]:
+        """Packet capture on the specified channel."""
+        async for packet in self._packet_capture(channel=channel):
+            yield packet
+
+    # @abc.abstractmethod
+    async def _packet_capture(
+        self, channel: int
+    ) -> AsyncGenerator[t.CapturedPacket, None]:
+        """Packet capture on the specified channel, internal."""
+        if False:
+            yield  # pragma: no cover
+
+    async def packet_capture_change_channel(self, channel: int) -> None:
+        """Change the channel of an active packet capture."""
+        await self._packet_capture_change_channel(channel=channel)
+
+    # @abc.abstractmethod
+    async def _packet_capture_change_channel(self, channel: int) -> None:
+        """Change the channel of an active packet capture, internal."""
+
     async def permit(self, time_s: int = 60, node: t.EUI64 | str | None = None) -> None:
         """Permit joining on a specific node or all router nodes."""
         assert 0 <= time_s <= 254
