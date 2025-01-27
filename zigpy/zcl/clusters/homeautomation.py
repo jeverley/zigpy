@@ -139,33 +139,33 @@ class ApplianceStatistics(Cluster):
 
 
 class MeasurementType(t.bitmap32):
-    Active_measurement_AC = 2 << 0
-    Reactive_measurement_AC = 2 << 1
-    Apparent_measurement_AC = 2 << 2
-    Phase_A_measurement = 2 << 3
-    Phase_B_measurement = 2 << 4
-    Phase_C_measurement = 2 << 5
-    DC_measurement = 2 << 6
-    Harmonics_measurement = 2 << 7
-    Power_quality_measurement = 2 << 8
+    Active_measurement_AC = 1 << 0
+    Reactive_measurement_AC = 1 << 1
+    Apparent_measurement_AC = 1 << 2
+    Phase_A_measurement = 1 << 3
+    Phase_B_measurement = 1 << 4
+    Phase_C_measurement = 1 << 5
+    DC_measurement = 1 << 6
+    Harmonics_measurement = 1 << 7
+    Power_quality_measurement = 1 << 8
 
 
-class DCOverloadAlarmMark(t.bitmap8):
-    Voltage_Overload = 0b00000001
-    Current_Overload = 0b00000010
+class DCOverloadAlarmsMask(t.bitmap8):
+    Voltage_Overload = 1 << 0
+    Current_Overload = 1 << 1
 
 
 class ACAlarmsMask(t.bitmap16):
-    Voltage_Overload = 2 << 0
-    Current_Overload = 2 << 1
-    Active_Power_Overload = 2 << 2
-    Reactive_Power_Overload = 2 << 3
-    Average_RMS_Over_Voltage = 2 << 4
-    Average_RMS_Under_Voltage = 2 << 5
-    RMS_Extreme_Over_Voltage = 2 << 6
-    RMS_Extreme_Under_Voltage = 2 << 7
-    RMS_Voltage_Sag = 2 << 8
-    RMS_Voltage_Swell = 2 << 9
+    Voltage_Overload = 1 << 0
+    Current_Overload = 1 << 1
+    Active_Power_Overload = 1 << 2
+    Reactive_Power_Overload = 1 << 3
+    Average_RMS_Over_Voltage = 1 << 4
+    Average_RMS_Under_Voltage = 1 << 5
+    RMS_Extreme_Over_Voltage = 1 << 6
+    RMS_Extreme_Under_Voltage = 1 << 7
+    RMS_Voltage_Sag = 1 << 8
+    RMS_Voltage_Swell = 1 << 9
 
 
 class ElectricalMeasurement(Cluster):
@@ -174,7 +174,7 @@ class ElectricalMeasurement(Cluster):
     ep_attribute: Final = "electrical_measurement"
 
     MeasurementType: Final = MeasurementType
-    DCOverloadAlarmMark: Final = DCOverloadAlarmMark
+    DCOverloadAlarmsMask: Final = DCOverloadAlarmsMask
     ACAlarmsMask: Final = ACAlarmsMask
 
     class AttributeDefs(BaseAttributeDefs):
@@ -354,7 +354,7 @@ class ElectricalMeasurement(Cluster):
         )
         # DC Manufacturer Threshold Alarms
         dc_overload_alarms_mask: Final = ZCLAttributeDef(
-            id=0x0700, type=DCOverloadAlarmMark, access="rp"
+            id=0x0700, type=DCOverloadAlarmsMask, access="rp"
         )
         dc_voltage_overload: Final = ZCLAttributeDef(
             id=0x0701, type=t.int16s, access="rp"
