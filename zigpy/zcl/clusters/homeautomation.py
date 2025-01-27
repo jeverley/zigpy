@@ -150,7 +150,7 @@ class MeasurementType(t.bitmap32):
     Power_quality_measurement = 1 << 8
 
 
-class DCOverloadAlarmsMask(t.bitmap8):
+class DCOverloadAlarmMark(t.bitmap8):
     Voltage_Overload = 1 << 0
     Current_Overload = 1 << 1
 
@@ -174,7 +174,7 @@ class ElectricalMeasurement(Cluster):
     ep_attribute: Final = "electrical_measurement"
 
     MeasurementType: Final = MeasurementType
-    DCOverloadAlarmsMask: Final = DCOverloadAlarmsMask
+    DCOverloadAlarmMark: Final = DCOverloadAlarmMark
     ACAlarmsMask: Final = ACAlarmsMask
 
     class AttributeDefs(BaseAttributeDefs):
@@ -354,7 +354,7 @@ class ElectricalMeasurement(Cluster):
         )
         # DC Manufacturer Threshold Alarms
         dc_overload_alarms_mask: Final = ZCLAttributeDef(
-            id=0x0700, type=DCOverloadAlarmsMask, access="rp"
+            id=0x0700, type=DCOverloadAlarmMark, access="rp"
         )
         dc_voltage_overload: Final = ZCLAttributeDef(
             id=0x0701, type=t.int16s, access="rp"
